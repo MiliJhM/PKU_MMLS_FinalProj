@@ -16,7 +16,7 @@ Gene drive technology can be used to control the population size and distributio
 
 Markov model, continuous/discrete spatial models.
 
-##### Desigh of the model
+##### Design of the model
 1. Human-mosquito malaria model(without mosquito population changing)
 Different state of mosquito(including sensitive incubation infectious) and human(healthy incubation patient),by frequency
 Transmission rate in mosquito (sensitive->incubation) base on human patient rate. 
@@ -24,11 +24,11 @@ Transmission rate (healthy->incubation) base on resistant rate and mosuquito pop
 A resistance factor to represent resistance level of people.Losing by time and increase when malaria transmission take place.
 
 2. Human-mosquito malaria model(with mosquito population changing).
-Find/compare different density-dependent curve
-Mosquito life cycle modeling , focusing on gene frequency(incuding drive) and population size
+Use a density-dependent curve to keep a stable population
+Mosquito life cycle modeling , focusing on gene frequency(including drive) and population size
 
 #### Working Plan
-1. Make a Human-mosquito malaria model without 
+1. Make a Human-mosquito malaria model
 2. Add gene drive and mosquito life cycle to the model
 3. Use diffusion coefficient to add spatial feature 
 
