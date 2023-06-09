@@ -11,7 +11,7 @@ function spacial(filename, plist)
 %       sqrt(df)
 %       release_rate: 释放量/环境容纳量
 %       germline_resistance_forming: 产生resistance配子的生成率
-%       dd_mothertal_inheritance: 基因驱动效应通过母系遗传给下一代的概率
+%       dd_mothertal_inheritance: f
 
     plotgif = true;
     storename=filename;
@@ -21,7 +21,7 @@ function spacial(filename, plist)
     %times and spatial
     time=800;
     drive_release_time=20;
-    release_rate=plist.release_rate;
+    release_rate=0.05;
     n=400;
     samplepoint1=1;
     samplepoint2=n;
@@ -69,12 +69,12 @@ function spacial(filename, plist)
     reducemth2=0;
     
     %
-    drive_conversion=plist.drive_conversion;
-    drive_fitness=plist.drive_fitness;
-    germline_resistance_forming=plist.germline_resistance_forming;
+    drive_conversion=0.9;
+    drive_fitness=0.9;
+    germline_resistance_forming=0.05;
     partial_HDR_rate=0.0001;
     NHEJ_r1_forming_rate=0.000001;
-    dd_mothertal_inheritance=plist.dd_mothertal_inheritance;
+    dd_mothertal_inheritance=0.05;
     
     %drive type
     recessivelethal=true;
@@ -103,6 +103,11 @@ function spacial(filename, plist)
     for i =1:e-1
         fussion(i)=(fussion(i)-fussion(i+1));
     end
+    
+    fussion3=normcdf(-2.5,0,speed);
+    fussion2=normcdf(-1.5,0,speed)-normcdf(-2.5,0,speed);
+    fussion1=normcdf(-0.5,0,speed)-normcdf(-1.5,0,speed);
+    fussion0=normcdf(0.5,0,speed)-normcdf(-0.5,0,speed);
     
     %dimension2:genotype
     % wtwt wtdr wtr1 wtr2 drdr drr1 drr2 r1r1 r1r2 r2r2
