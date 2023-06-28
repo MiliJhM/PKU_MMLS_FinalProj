@@ -1,4 +1,4 @@
-function spacial(filename, plist)
+function result = spacial(filename, plist,humanlist,mosquitolist,EIRS,prevalences,plotgif,sample,findhuman,findmosquito)
 % filename spacial.m
 % Main Function
 % Arguments:
@@ -12,53 +12,60 @@ function spacial(filename, plist)
 %       release_rate: 释放量/环境容纳量
 %       germline_resistance_forming: 产生resistance配子的生成率
 %       dd_mothertal_inheritance: 基因驱动效应通过母系遗传给下一代的概率
-
-    plotgif = true;
+    result = 0x7FFFFFFF;
     storename=filename;
+    storename = sprintf('%s_%.3f_%.3f_%.3f_%.3f_%.3f_%.3f_%.3f', storename, plist.drive_conversion, plist.drive_fitness, plist.release_rate, plist.germline_resistance_forming, plist.dd_mothertal_inheritance, plist.log_immunity_speed, plist.reducehtm);
     %drive_fitness,drive_conversion,speed
     
     %% Default parameter
     %times and spatial
     time=800;
-    drive_release_time=20;
+    drive_release_time=10;
     release_rate=plist.release_rate;
-    n=400;
-    samplepoint1=1;
-    samplepoint2=n;
-
-    minprevelance=1;
-    maxprevelance=0;
-    t1=1000000;
-    t2=1000000;
+    n=100;
     
+    if sample
+        samplepoint1=1;
+        samplepoint2=n;
+        t1=1000000;
+        t2=1000000;
+    end
     speed=1;
+    if findhuman
+        n=length(EIRS);
+        speed=0;
+    end
+    if findmosquito
+        n=length(prevalences);
+        speed=0;
+    end
     
     % competition
     %capacity=reshape((1:n)*0.1,n,1);
-    capacity=5;
+    capacity=mosquitolist.capacity;
     old_larva_competition_factor=5;
     Low_density_growth_rate=9;
     num_eggs=16;
-    reproduction_rate=0.5;
+    reproduction_rate=mosquitolist.reproduction_rate;
     %reproduction_rate=reshape(0.8*(1:n)/n,n,1);
     %capacity=1./reproduction_rate./reproduction_rate./reproduction_rate;
     %malaria
     
-    immunity_speed=10;
-    htom=reproduction_rate*0.2; %rate that healthy become incubation per human rate
+    immunity_speed=10^plist.log_immunity_speed;
+    htom=reproduction_rate*mosquitolist.htom; %rate that healthy become incubation per human rate
     develop_rate=5/8; %rate that incubation become patient
     %develop_rate=reshape((1:n)/n,n,1);
     x=1:n;
     
     population=1;
-    mtoh=0.65*reproduction_rate/population;
-    mtoh_immunity=0.8;
-    human_recovery=0.05;%0.1-0.03
+    humanlist.mtoh=humanlist.mtoh*reproduction_rate/population;
+
+    %humanlist.human_recovery=0.05;%0.1-0.03
     human_resistance=ones(n,1)*2.73;%initial resistance
-    immunity_gain_rate=0.01*immunity_speed;
-    immunity_losing_rate=0.002*immunity_speed;
-    b1=0.5;
-    shape=2.155;
+    humanlist.immunity_gain_rate=humanlist.immunity_gain_rate*immunity_speed;
+    humanlist.immunity_losing_rate=humanlist.immunity_losing_rate*immunity_speed;
+    %humanlist.b1=0.5;
+    %humanlist.shape=2.155;
     
     %malaria drive
     reducedevelop1=0;
@@ -68,8 +75,8 @@ function spacial(filename, plist)
     reducemth1=0;
     reducemth2=0;
     
-    %
-    drive_conversion=plist.drive_conversion;
+    %resistance forms before drive conversion
+    drive_conversion=plist.drive_conversion*(1-plist.germline_resistance_forming);
     drive_fitness=plist.drive_fitness;
     germline_resistance_forming=plist.germline_resistance_forming;
     partial_HDR_rate=0.0001;
@@ -278,12 +285,13 @@ function spacial(filename, plist)
     mosquito_genotypes=zeros(n,10,time);
     
     %% main loop
-    f1=figure;
-    
+    if plotgif
+        f1=figure;
+    end
     max=(15).*ones(n,1);
     hmax=ones(n,1)*1.2;
     hmin=zeros(n,1);
-    
+        
     for i = 1:time
         if i==drive_release_time
             mosquitos(1:10,2,1,3)=mosquitos(1:10,2,1,3)+release_rate*capacity;
@@ -355,13 +363,20 @@ function spacial(filename, plist)
         mosquito_infectious=sum(sum(mosquitos(:,:,3,3:8),4),2)-sum(sum(mosquitos(:,5,3,3:8),4),2)*reducemth1-sum(sum(mosquitos(:,[2,6,7],3,3:8),4),2)*reducemth2;
         
         %infection
-        mosquitos(:,:,2,3:8)=mosquitos(:,:,2,3:8)+mosquitos(:,:,1,3:8).*humans(:,4).*htom;
-        mosquitos(:,[2,6,7],2,3:8)=mosquitos(:,[2,6,7],2,3:8)-mosquitos(:,[2,6,7],1,3:8).*humans(:,4).*htom*reducehtm1;
-        mosquitos(:,5,2,3:8)=mosquitos(:,5,2,3:8)-mosquitos(:,5,1,3:8).*humans(:,4).*htom*reducehtm2;
+        if findmosquito
+            prevalence=prevalences;
+        else
+            prevalence=humans(:,4);
+        end
+
         
-        mosquitos(:,:,1,3:8)=mosquitos(:,:,1,3:8)-mosquitos(:,:,1,3:8).*(humans(:,4).*htom*reproduction_rate);
-        mosquitos(:,[2,6,7],1,3:8)=mosquitos(:,[2,6,7],1,3:8)+mosquitos(:,[2,6,7],1,3:8).*(humans(:,4).*htom*reproduction_rate*reducehtm1);
-        mosquitos(:,5,1,3:8)=mosquitos(:,5,1,3:8)+mosquitos(:,5,1,3:8).*(humans(:,4).*htom*reproduction_rate*reducehtm2);
+        mosquitos(:,:,2,3:8)=mosquitos(:,:,2,3:8)+mosquitos(:,:,1,3:8).*prevalence.*htom;
+        mosquitos(:,[2,6,7],2,3:8)=mosquitos(:,[2,6,7],2,3:8)-mosquitos(:,[2,6,7],1,3:8).*prevalence.*htom*reducehtm1;
+        mosquitos(:,5,2,3:8)=mosquitos(:,5,2,3:8)-mosquitos(:,5,1,3:8).*prevalence.*htom*reducehtm2;
+        
+        mosquitos(:,:,1,3:8)=mosquitos(:,:,1,3:8)-mosquitos(:,:,1,3:8).*(prevalence.*htom*reproduction_rate);
+        mosquitos(:,[2,6,7],1,3:8)=mosquitos(:,[2,6,7],1,3:8)+mosquitos(:,[2,6,7],1,3:8).*(prevalence.*htom*reproduction_rate*reducehtm1);
+        mosquitos(:,5,1,3:8)=mosquitos(:,5,1,3:8)+mosquitos(:,5,1,3:8).*(prevalence.*htom*reproduction_rate*reducehtm2);
         
         %develop
         mosquitos(:,[1,3,4,8,9,10],3,3:8)=mosquitos(:,[1,3,4,8,9,10],2,3:8)*develop_rate+mosquitos(:,[1,3,4,8,9,10],3,3:8);
@@ -373,10 +388,14 @@ function spacial(filename, plist)
         
         %human malaria
         %old infection way ,may cause problem
-        %humans(:,2)=humans(:,1).*mosquito_infectious.*(1-human_resistance).*mtoh;
+        %humans(:,2)=humans(:,1).*mosquito_infectious.*(1-human_resistance).*humanlist.mtoh;
         %humans(:,1)=1-humans(:,2)-humans(:,3)-humans(:,4);
-        humans(:,1)=exp(-mosquito_infectious.*(b1+(1-b1)./(1+human_resistance.^shape)).*mtoh+log(humans(:,1)))+humans(:,4)*human_recovery;
-        humans(:,4)=humans(:,4)*(1-human_recovery)+humans(:,3);
+        if findhuman
+            humans(:,1)=exp(-(EIRS./52).*(humanlist.b1+(1-humanlist.b1)./(1+human_resistance.^humanlist.shape)).*humanlist.mtoh+log(humans(:,1)))+humans(:,4)*humanlist.human_recovery;
+        else
+            humans(:,1)=exp(-mosquito_infectious*reproduction_rate.*(humanlist.b1+(1-humanlist.b1)./(1+human_resistance.^humanlist.shape)).*humanlist.mtoh+log(humans(:,1)))+humans(:,4)*humanlist.human_recovery;
+        end
+        humans(:,4)=humans(:,4)*(1-humanlist.human_recovery)+humans(:,3);
         humans(:,3)=humans(:,2);
         humans(:,2)=1-humans(:,1)-humans(:,3)-humans(:,4);
     
@@ -384,8 +403,8 @@ function spacial(filename, plist)
         %humans(humans(:,[1,4])<0.01)=0;
         %humans(:,4)=0;
         
-        %human_resistance=human_resistance+humans(:,4)*immunity_gain_rate-(1-humans(:,4))*immunity_losing_rate;
-        human_resistance=human_resistance+humans(:,4)*immunity_gain_rate-human_resistance*immunity_losing_rate;
+        %human_resistance=human_resistance+humans(:,4)*humanlist.immunity_gain_rate-(1-humans(:,4))*humanlist.immunity_losing_rate;
+        human_resistance=human_resistance+humans(:,4)*humanlist.immunity_gain_rate-human_resistance*humanlist.immunity_losing_rate;
     
     
         %store output
@@ -400,20 +419,34 @@ function spacial(filename, plist)
         gene1=squeeze(2*genotypes(:,1)+genotypes(:,2)+genotypes(:,3)+genotypes(:,4));
         gene3=squeeze(2*genotypes(:,8)+genotypes(:,6)+genotypes(:,3)+genotypes(:,9));
         gene4=squeeze(2*genotypes(:,10)+genotypes(:,9)+genotypes(:,4)+genotypes(:,7));
-        clf(f1);
-    
-        
-        subplot(2,1,1),    
-        plot(x,max,'black', x, gene1, 'blue', x, gene2,x, gene3, x, gene4);
-        title('mosquito gene frequency')
-        legend('','wild type','drive','functional resistance','nonfunctional resistance');
-    
-        subplot(2,1,2)
-        plot(x,hmax,'black', x, hmin, 'black', x, humans(:,4), 'red' , x,1-(b1+(1-b1)./(1+human_resistance.^shape)),'blue', x,mosquito_infectious*reproduction_rate,'green');
-        title('malaria')
-        legend('','','human prelalance','immunity','weekly EIR');%,'vector_density'
-        
         if plotgif
+            clf(f1);
+    
+        
+            subplot(2,1,1),    
+            plot(x,max,'black', x, gene1, 'blue', x, gene2,x, gene3, x, gene4);
+            title('mosquito gene frequency')
+            legend('','wild type','drive','functional resistance','nonfunctional resistance');
+    
+            subplot(2,1,2)
+
+            if findmosquito
+                plot(mosquito_infectious*reproduction_rate*52,prevalences,'green');
+            
+            else
+                plot( x, humans(:,4), 'red' , x,1-(humanlist.b1+(1-humanlist.b1)./(1+human_resistance.^humanlist.shape)),'blue', x,mosquito_infectious*reproduction_rate/7,'green');
+            end
+            result = min(mean(humans(:,4)), result);
+            EIRS1=[3.748022899,4.209665958,20.302014,19.46226874,37.85310084,68.37694864,41.62689645,67.65891383,92.87530606,128.8428103,126.1500306,157.4671712,198.6464579,209.4149771,240.2292953,169.5482093,159.1395626,162.5352447];
+            EIRS1=reshape(EIRS1,length(EIRS1),1);
+            prevalences1=[0.02769617,0.167517702,0.098683032,0.283678023,0.25356346,0.268620741,0.612798931,0.511697506,0.470825206,0.685937987,0.617101703,0.59559107,0.580532176,0.552568192,0.602044422,0.806399466,0.892445223,0.944072032];
+            prevalences1=reshape(prevalences1,length(prevalences1),1);
+            hold on
+            % scatter(EIRS1,prevalences1,'.');
+            title('malaria')
+            legend('human prelalance','immunity','daily EIR');%,'vector_density'
+        
+        
             make_gif(storename, i);
         end
         
@@ -426,54 +459,34 @@ function spacial(filename, plist)
             end
             mosquitos(:,:,:,3:8)=new_mosquito;
         end
-    
-        if gene1(samplepoint1)<capacity
-            if i<t1
-                t1=i;
+
+        if sample
+            if gene1(samplepoint1)<capacity
+                if i<t1
+                    t1=i;
+                end
+            end
+            if gene1(samplepoint2)<capacity
+                t2=i;
+                break
             end
         end
-        if gene1(samplepoint2)<capacity
-            t2=i;
-            break
-        end
-    end
-    (samplepoint2-samplepoint1)/(t2-t1)/speed
     
-    %{
-    
-    figuremosquito_genotypesmosquito_genotypes
-    plot(x,mosquito_malarias/capacity/2,'-b');
-    hold on;
-    plot(x,human_malarias,'-r' );
-    hold on;
-    plot(x,human_immunitys,'-black');
-    %}
-    %{
-    for i =1:10
-        plot(x,squeeze(mosquito_genotypes(1,i,:)))
-        hold on
+        
     end
-    legend('wtwt','wtdr','wtr1','wtr2','drdr','drr1','drr2','r1r1','r1r2','r2r2');
-    %}
-    %{
-    genes=zeros(n,4,time);
-    genes(:,2,:)=2*mosquito_genotypes(:,5,:)+mosquito_genotypes(:,2,:)+mosquito_genotypes(:,6,:)+mosquito_genotypes(:,7,:);
-    genes(:,1,:)=2*mosquito_genotypes(:,1,:)+mosquito_genotypes(:,2,:)+mosquito_genotypes(:,3,:)+mosquito_genotypes(:,4,:);
-    genes(:,3,:)=2*mosquito_genotypes(:,8,:)+mosquito_genotypes(:,6,:)+mosquito_genotypes(:,3,:)+mosquito_genotypes(:,9,:);
-    genes(:,4,:)=2*mosquito_genotypes(:,10,:)+mosquito_genotypes(:,9,:)+mosquito_genotypes(:,4,:)+mosquito_genotypes(:,7,:);
-    
-    f1=figure;
-    for i=t
-        clf(f1)
-        %plot_func(genes,i,x);G
-        plot(x,squeeze(genes(:,1,i)),'black')
-        hold on
-        plot(x,squeeze(genes(:,2,i)),'blue')
-        hold on
-        plot(x,squeeze(genes(:,3,i)),'green')
-        hold on
-        plot(x,squeeze(genes(:,4,i)),'red')
+    if sample
+        result= (samplepoint2-samplepoint1)/(t2-t1)/speed;
+        
     end
-    %}
+    if findhuman
+        delta=prevalences-humans(:,4);
+        result=sum(delta.*delta);
+    end
+    if findmosquito
+        %mosquito_infectious*reproduction_rate*capacity*52
+        delta=EIRS-reproduction_rate.*mosquito_infectious.*52;
+        result=sum(delta.*delta);
+    end
+
     
 
