@@ -1,12 +1,13 @@
 # PKU_MMLS_FinalProj
  The final assignment for the Biomathematics Modeling course at Peking University.
 
-## Abstract:
+## To Start With
 
-Implement a Markov linear model based human mosquito interaction model that can roughly predict the impact of gene driven technology on malaria transmission.
+The model is constructed in `spacial.m`, with the parameters being the passed in hyperparameter structure. 
 
-## TODO:
+We provide several entrances to quickly complete grid search/Minimum mean square error fitting:
 
-1. Human-mosquito-malaria transmission model based on SEIR.
-2. Simulation model for the effect of gene driven factors on mosquito population size.
-3. Spatial?
+* `main.m` provides a convenient and efficient script for grid searching of model hyperparameters.
+* `main1.m` is provided to implement Minimum mean square error fitting for some parameters of the model.
+* `init.m` is used for fast one-dimensional traversal of hyperparameters.
+

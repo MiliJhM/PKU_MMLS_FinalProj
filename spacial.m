@@ -12,7 +12,7 @@ function result = spacial(filename, plist,humanlist,mosquitolist,EIRS,prevalence
 %       release_rate: 释放量/环境容纳量
 %       germline_resistance_forming: 产生resistance配子的生成率
 %       dd_mothertal_inheritance: 基因驱动效应通过母系遗传给下一代的概率
-    result = 0x7FFFFFFF;
+    result = 2147483647;
     storename=filename;
     storename = sprintf('%s_%.3f_%.3f_%.3f_%.3f_%.3f_%.3f_%.3f', storename, plist.drive_conversion, plist.drive_fitness, plist.release_rate, plist.germline_resistance_forming, plist.dd_mothertal_inheritance, plist.log_immunity_speed, plist.reducehtm);
     %drive_fitness,drive_conversion,speed
@@ -61,7 +61,7 @@ function result = spacial(filename, plist,humanlist,mosquitolist,EIRS,prevalence
     humanlist.mtoh=humanlist.mtoh*reproduction_rate/population;
 
     %humanlist.human_recovery=0.05;%0.1-0.03
-    human_resistance=ones(n,1)*2.73;%initial resistance
+    human_resistance=ones(n,1)*32.705;%initial resistance
     humanlist.immunity_gain_rate=humanlist.immunity_gain_rate*immunity_speed;
     humanlist.immunity_losing_rate=humanlist.immunity_losing_rate*immunity_speed;
     %humanlist.b1=0.5;
@@ -70,8 +70,8 @@ function result = spacial(filename, plist,humanlist,mosquitolist,EIRS,prevalence
     %malaria drive
     reducedevelop1=0;
     reducedevelop2=0;
-    reducehtm1=0.55;
-    reducehtm2=0.65;
+    reducehtm1=sqrt(plist.reducehtm);
+    reducehtm2=plist.reducehtm;
     reducemth1=0;
     reducemth2=0;
     
@@ -398,7 +398,7 @@ function result = spacial(filename, plist,humanlist,mosquitolist,EIRS,prevalence
         humans(:,4)=humans(:,4)*(1-humanlist.human_recovery)+humans(:,3);
         humans(:,3)=humans(:,2);
         humans(:,2)=1-humans(:,1)-humans(:,3)-humans(:,4);
-    
+        result = min(mean(humans(:,4)), result);
         %prevent very low density human transmission
         %humans(humans(:,[1,4])<0.01)=0;
         %humans(:,4)=0;
@@ -436,7 +436,7 @@ function result = spacial(filename, plist,humanlist,mosquitolist,EIRS,prevalence
             else
                 plot( x, humans(:,4), 'red' , x,1-(humanlist.b1+(1-humanlist.b1)./(1+human_resistance.^humanlist.shape)),'blue', x,mosquito_infectious*reproduction_rate/7,'green');
             end
-            result = min(mean(humans(:,4)), result);
+            
             EIRS1=[3.748022899,4.209665958,20.302014,19.46226874,37.85310084,68.37694864,41.62689645,67.65891383,92.87530606,128.8428103,126.1500306,157.4671712,198.6464579,209.4149771,240.2292953,169.5482093,159.1395626,162.5352447];
             EIRS1=reshape(EIRS1,length(EIRS1),1);
             prevalences1=[0.02769617,0.167517702,0.098683032,0.283678023,0.25356346,0.268620741,0.612798931,0.511697506,0.470825206,0.685937987,0.617101703,0.59559107,0.580532176,0.552568192,0.602044422,0.806399466,0.892445223,0.944072032];
